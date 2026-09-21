@@ -1,0 +1,320 @@
+/* =====================================================================
+   CATÁLOGO DIGITAL COOPERACAFE
+   Paleta: verde cafetal, café tostado, crema pergamino, dorado (acento)
+   ===================================================================== */
+
+:root {
+  --verde-oscuro:   #1B4332;
+  --verde-medio:    #2D6A4F;
+  --cafe-oscuro:    #3C2A21;
+  --cafe-medio:     #7F5539;
+  --cafe-claro:     #C7A17A;
+  --crema:          #FBF6ED;
+  --crema-panel:    #F4EDE0;
+  --dorado:         #B8863B;
+  --blanco:         #FFFFFF;
+  --sombra:         rgba(60, 42, 33, 0.14);
+
+  --fuente-titular: 'Fraunces', Georgia, serif;
+  --fuente-texto:   'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radio: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none; /* evita rebotes/gestos del navegador que interfieran con el swipe */
+}
+
+body {
+  font-family: var(--fuente-texto);
+  color: var(--cafe-oscuro);
+  background: linear-gradient(180deg, #EFE6D4 0%, var(--crema) 22%);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===================== ENCABEZADO ===================== */
+
+.cabecera {
+  padding: 14px 20px;
+  background: var(--verde-oscuro);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  flex: 0 0 auto;
+  z-index: 20;
+}
+
+.cabecera__interior {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cabecera__logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.cabecera__logo-texto {
+  font-family: var(--fuente-titular);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  color: var(--crema);
+}
+
+/* ===================== ÁREA DEL CATÁLOGO ===================== */
+
+.catalogo {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 14px 10px;
+  position: relative;
+  min-height: 0;
+}
+
+.libro {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: min(78vh, 760px);
+  perspective: 1900px;
+  touch-action: pan-y; /* deja que el eje horizontal lo maneje nuestro JS (swipe) */
+}
+
+.pagina {
+  position: absolute;
+  inset: 0;
+  background: var(--blanco);
+  border-radius: var(--radio);
+  box-shadow: 0 18px 40px var(--sombra), 0 2px 8px rgba(60,42,33,0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pagina--atras {
+  z-index: 1;
+}
+
+.pagina--adelante {
+  z-index: 2;
+  transform-origin: left center;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Cuando el usuario arrastra, quitamos la transición para seguir el dedo/mouse 1:1 */
+.pagina--adelante.arrastrando {
+  transition: none !important;
+}
+
+.pagina--adelante.animando {
+  transition: transform 0.46s cubic-bezier(.4,.05,.2,1);
+}
+
+/* ------------- contenido interno de cada página (marca) ------------- */
+
+.pagina__cuerpo {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 26px 18px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Logo de la marca, grande, antes de los productos */
+.pagina__logo-cont {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 110px;
+  margin-bottom: 22px;
+}
+
+.pagina__logo {
+  max-width: 78%;
+  max-height: 140px;
+  object-fit: contain; /* conserva proporciones originales */
+}
+
+.pagina__logo-cont.sin-imagen .pagina__logo {
+  max-height: 90px;
+  opacity: 0.6;
+}
+
+/* Botón único de la página, al final de todo */
+.pagina__boton {
+  flex: 0 0 auto;
+  display: inline-block;
+  align-self: center;
+  margin-top: 20px;
+  padding: 11px 30px;
+  background: var(--verde-oscuro);
+  color: var(--crema);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border-radius: 999px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.pagina__boton:hover { background: var(--verde-medio); }
+.pagina__boton:active { transform: scale(0.97); }
+
+/* ------------- cuadrícula de productos, adaptable por cantidad ------------- */
+
+.grilla {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 18px;
+  align-content: center;
+}
+
+/* 1 producto: protagonismo total */
+.grilla--1 {
+  grid-template-columns: 1fr;
+  place-items: center;
+}
+.grilla--1 .producto {
+  max-width: 420px;
+  width: 100%;
+}
+.grilla--1 .producto__imagen-cont {
+  aspect-ratio: 4 / 3;
+}
+
+/* 2 productos: equilibrados lado a lado */
+.grilla--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* 3 o 4 productos: cuadrícula ordenada */
+.grilla--3-4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* 5 o más: se adapta automáticamente al espacio disponible */
+.grilla--muchos {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* ------------- tarjeta de producto ------------- */
+
+.producto {
+  display: flex;
+}
+
+.producto__imagen-cont {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  background: var(--crema-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(124,85,57,0.12);
+  box-shadow: 0 2px 6px rgba(60,42,33,0.06);
+}
+
+.producto__imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* conserva proporciones originales, sin deformar */
+}
+
+.producto__imagen-cont.sin-imagen {
+  color: var(--cafe-claro);
+}
+
+/* ===================== FLECHAS Y CONTROLES ===================== */
+
+.flecha {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--blanco);
+  color: var(--cafe-oscuro);
+  box-shadow: 0 6px 16px rgba(60,42,33,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  z-index: 10;
+}
+
+.flecha:hover { background: var(--crema-panel); }
+.flecha:active { transform: translateY(-50%) scale(0.93); }
+
+.flecha:disabled {
+  opacity: 0.3;
+  cursor: default;
+  pointer-events: none;
+}
+
+.flecha--izq { left: max(4px, calc(50% - 400px)); }
+.flecha--der { right: max(4px, calc(50% - 400px)); }
+
+.indicador {
+  margin-top: 16px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--cafe-medio);
+}
+
+/* ===================== PIE DE PÁGINA ===================== */
+
+.pie {
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 10px 12px 16px;
+  font-family: var(--fuente-titular);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--cafe-medio);
+  opacity: 0.85;
+}
+
+/* ===================== RESPONSIVE ===================== */
+
+@media (max-width: 640px) {
+  .libro { height: min(74vh, 640px); touch-action: pan-y; }
+  .pagina__cuerpo { padding: 20px 16px 14px; }
+  .flecha { width: 38px; height: 38px; }
+  .flecha--izq { left: 6px; }
+  .flecha--der { right: 6px; }
+  .grilla--2,
+  .grilla--3-4 { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .producto { padding: 9px; }
+  .producto__boton { padding: 8px 16px; }
+}
+
+@media (max-width: 420px) {
+  .grilla--2 { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pagina--adelante.animando { transition-duration: 0.01ms; }
+  .producto__boton { transition: none; }
+}
