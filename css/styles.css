@@ -29,7 +29,7 @@ html,
 body {
   height: 100%;
   margin: 0;
-  overscroll-behavior: none; /* evita rebotes/gestos del navegador que interfieran con el swipe */
+  overscroll-behavior: none;
 }
 
 body {
@@ -93,12 +93,9 @@ body {
   max-width: 1200px;
   height: min(78vh, 760px);
   perspective: 1900px;
-  touch-action: none; /* por defecto el gesto lo maneja nuestro JS; se cambia a pan-y por JS cuando la página necesita scroll vertical */
+  touch-action: none;
 }
 
-/* En navegadores móviles que lo soportan, usar la altura de viewport
-   "dinámica" evita que el catálogo cambie de tamaño cuando la barra
-   de direcciones se oculta o aparece al deslizar */
 @supports (height: 100dvh) {
   .libro {
     height: min(78dvh, 760px);
@@ -106,19 +103,19 @@ body {
 }
 
 .pagina img {
-  -webkit-user-drag: none; /* evita que el navegador intente "arrastrar la imagen" en vez de pasar la página */
+  -webkit-user-drag: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
 .pagina {
-  position: absolute; /* ya sirve como referencia de posición para la capa ::before de abajo */
+  position: absolute;
   inset: 0;
   background: var(--blanco);
   background-image: url("../assets/Fondo.jpg");
-  background-size: cover; /* llena la tarjeta completa en cualquier tamaño, sin bordes blancos */
+  background-size: cover;
   background-repeat: no-repeat;
-  background-position: right center; /* ancla el borde derecho (donde están las ilustraciones) para que siempre se vea completo; solo recorta del lado izquierdo, que es papel liso */
+  background-position: right center;
   border-radius: var(--radio);
   box-shadow:
     0 18px 40px var(--sombra),
@@ -128,19 +125,14 @@ body {
   flex-direction: column;
 }
 
-/* Capa semitransparente sobre el fondo, para que el logo, las fotos y el
-   botón se sigan viendo nítidos aunque la imagen de fondo tenga mucho
-   contraste o color. Ajusta la opacidad (el último número, 0 a 1) a gusto:
-   más alto = fondo más discreto; más bajo = fondo más visible. */
 .pagina::before {
   content: "";
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0.45);
-  pointer-events: none; /* no bloquea clics ni el arrastre */
+  pointer-events: none;
 }
 
-/* El contenido debe ir por ENCIMA de esa capa */
 .pagina__cuerpo,
 .portada {
   position: relative;
@@ -158,7 +150,6 @@ body {
   will-change: transform, opacity;
 }
 
-/* Cuando el usuario arrastra, quitamos la transición para seguir el dedo/mouse 1:1 */
 .pagina--adelante.arrastrando {
   transition: none !important;
 }
@@ -167,7 +158,7 @@ body {
   transition: transform 0.46s cubic-bezier(0.4, 0.05, 0.2, 1);
 }
 
-/* ------------- contenido interno de cada página (marca) ------------- */
+/* ------------- contenido interno de cada página ------------- */
 
 .pagina__cuerpo {
   flex: 1 1 auto;
@@ -177,11 +168,9 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
-  scrollbar-gutter: stable; /* reserva el espacio de la barra de scroll siempre, así no "salta" el ancho al aparecer/desaparecer */
+  scrollbar-gutter: stable;
 }
 
-/* Mientras la página gira o se arrastra, se congela el scroll interno para
-   que ningún cambio de contenido/alto interfiera con la animación */
 .pagina--adelante.animando .pagina__cuerpo,
 .pagina--adelante.arrastrando .pagina__cuerpo {
   overflow-y: hidden;
@@ -200,7 +189,7 @@ body {
 .pagina__logo {
   max-width: 78%;
   max-height: 140px;
-  object-fit: contain; /* conserva proporciones originales */
+  object-fit: contain;
 }
 
 .pagina__logo-cont.sin-imagen .pagina__logo {
@@ -208,7 +197,6 @@ body {
   opacity: 0.6;
 }
 
-/* Botón único de la página, al final de todo */
 .pagina__boton {
   flex: 0 0 auto;
   display: inline-block;
@@ -234,12 +222,6 @@ body {
   transform: scale(0.97);
 }
 
-/* ------------- cuadrícula de productos, adaptable por cantidad -------------
-   Las filas y columnas exactas las calcula JS (según la cantidad de fotos)
-   y se aplican como estilo en línea, con grid-template-rows: 1fr por fila.
-   Así la cuadrícula SIEMPRE reparte el alto disponible entre las fotos que
-   haya, sin desbordar ni necesitar scroll, en cualquier tamaño de pantalla. */
-
 .grilla {
   flex: 1 1 auto;
   display: grid;
@@ -261,17 +243,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: visible; /* la sombra de abajo sale un poco de este recuadro invisible */
+  overflow: visible;
 }
 
 .producto__imagen {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* conserva proporciones originales, sin deformar */
+  object-fit: contain;
   border-radius: 6px;
-  filter: drop-shadow(
-    0 3px 8px rgba(60, 42, 33, 0.22)
-  ); /* sombra que sigue el contorno real de cada foto, en vez de un recuadro parejo */
+  filter: drop-shadow(0 3px 8px rgba(60, 42, 33, 0.22));
 }
 
 .producto__imagen-cont.sin-imagen {

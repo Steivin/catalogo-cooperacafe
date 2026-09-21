@@ -1,12 +1,3 @@
-/* =====================================================================
-   CATÁLOGO DIGITAL COOPERACAFE — lógica de datos y navegación
-   =====================================================================
-   Cómo agregar/editar marcas:
-   Edita únicamente el arreglo "marcas" de abajo. No es necesario tocar
-   el HTML ni el resto del JavaScript. Cada marca puede tener 1 o más
-   productos; la cuadrícula se adapta sola según la cantidad.
-   ===================================================================== */
-
 const marcas = [
   {
     nombre: "JM ESTRADA",
@@ -173,19 +164,14 @@ const marcas = [
       { nombre: "Cosecha2", imagen: "assets/cosecha2.png" },
     ],
   },
-
-  /* Agrega aquí el resto de marcas reales siguiendo el mismo formato,
-     hasta completar las ~20 marcas de COOPERACAFE. */
 ];
 
-/* Logo de COOPERACAFE usado en la portada (mismo que el del encabezado) */
+/* Logo de COOPERACAFE*/
 const LOGO_COOPERACAFE =
   "https://cooperacafe.com/wp-content/uploads/2023/03/Recurso-1.png";
 
-/* Total de páginas del libro: la portada + cada marca */
 const TOTAL_PAGINAS = marcas.length + 1;
 
-/* índice 0 = portada; índice 1..N = marcas[0..N-1] */
 function contenidoEnIndice(indice) {
   if (indice === 0) return { esPortada: true };
   return marcas[indice - 1];
@@ -202,18 +188,17 @@ const btnAnterior = document.getElementById("btnAnterior");
 const btnSiguiente = document.getElementById("btnSiguiente");
 
 let indiceActual = 0;
-let animando = false; // true mientras corre la animación de paso de página
-let arrastrando = false; // true mientras el usuario arrastra/desliza
+let animando = false;
+let arrastrando = false;
 let origenX = 0;
 let ultimoDeltaX = 0;
-let direccionGesto = null; // 'next' | 'prev' | 'bloqueado' | null
+let direccionGesto = null;
 
 /* ---------------------------------------------------------------------
    PRECARGA DE IMÁGENES
    ---------------------------------------------------------------------
    Se cargan en memoria del navegador TODAS las imágenes del catálogo
-   apenas se abre la página. Así, cuando el usuario pasa de página, la
-   foto ya está lista y no "aparece a medio giro" ni frena la animación.
+   apenas se abre la página.
    ------------------------------------------------------------------- */
 function precargarImagenes() {
   const rutas = new Set();
@@ -232,7 +217,6 @@ function precargarImagenes() {
 
 /* ---------------------------------------------------------------------
    PLACEHOLDER PARA IMÁGENES FALTANTES
-   (evita íconos de "imagen rota" mientras se cargan las fotos reales)
    ------------------------------------------------------------------- */
 function imagenPlaceholder() {
   const svg = `
@@ -258,18 +242,12 @@ function manejarErrorImagen(img) {
 window.manejarErrorImagen = manejarErrorImagen;
 
 /* ---------------------------------------------------------------------
-   RENDERIZADO DE UNA PÁGINA (portada o marca completa)
+   RENDERIZADO
    ---------------------------------------------------------------------
-   La cuadrícula de fotos usa filas/columnas calculadas (no un tamaño de
-   celda fijo), así que siempre reparte el espacio vertical disponible
-   entre las fotos que haya — nunca se pasa de la pantalla ni necesita
-   scroll, sea un celular pequeño o una pantalla grande.
    ------------------------------------------------------------------- */
 function calcularGrid(cantidad) {
   if (cantidad <= 1) return { columnas: 1, filas: 1 };
   if (cantidad === 2) return { columnas: 2, filas: 1 };
-  // 3 y 4 usan la misma cuadrícula base de 2x2; con 3, el tercer producto
-  // se centra abajo en vez de quedar en la columna izquierda (ver tarjetaProducto).
   if (cantidad <= 4) return { columnas: 2, filas: 2 };
   const columnas = Math.ceil(Math.sqrt(cantidad));
   const filas = Math.ceil(cantidad / columnas);
@@ -277,9 +255,6 @@ function calcularGrid(cantidad) {
 }
 
 function tarjetaProducto(producto, indice, total) {
-  // Caso especial: con exactamente 3 productos, el tercero (el último) se
-  // centra en la fila de abajo en vez de quedar pegado a la izquierda,
-  // como una "pirámide" (dos arriba, uno centrado abajo).
   const esTercerDeTres = total === 3 && indice === 2;
   const estilo = esTercerDeTres
     ? ' style="grid-column: 1 / -1; justify-self: center; width: 50%;"'
@@ -347,15 +322,12 @@ function actualizarIndicador() {
     indiceActual === 0
       ? "Portada"
       : `Página ${indiceActual} de ${marcas.length}`;
-  // Con navegación circular, las flechas nunca se deshabilitan por llegar al final/inicio.
 }
 
 /* ---------------------------------------------------------------------
-   ANIMACIÓN DE PASO DE PÁGINA (efecto "hoja de libro")
+   ANIMACIÓN DE PASO DE PÁGINA
    ------------------------------------------------------------------- */
 function prepararFlip(direccion) {
-  // Navegación circular: después de la última marca se vuelve a la portada,
-  // y antes de la portada se vuelve a la última marca.
   const destino =
     direccion === "next"
       ? (indiceActual + 1) % TOTAL_PAGINAS
@@ -372,7 +344,6 @@ function finalizarFlip(direccion, destino) {
   paginaAdelante.classList.remove("animando", "arrastrando");
   paginaAdelante.style.transition = "none";
   paginaAdelante.style.transform = "rotateY(0deg)";
-  // fuerza reflow antes de restaurar la transición para el próximo flip
   void paginaAdelante.offsetHeight;
   paginaAdelante.style.transition = "";
   paginaAtras.innerHTML = "";
@@ -381,14 +352,6 @@ function finalizarFlip(direccion, destino) {
   actualizarModoTactil();
 }
 
-/* ---------------------------------------------------------------------
-   ¿La página visible necesita scroll vertical?
-   ---------------------------------------------------------------------
-   Si cabe completa, dejamos el swipe horizontal con control total (más
-   fluido). Si no cabe (varias fotos + botón más abajo), le devolvemos al
-   navegador el control del scroll vertical nativo y solo tomamos el
-   gesto cuando es claramente horizontal.
-   ------------------------------------------------------------------- */
 function actualizarModoTactil() {
   const cuerpo = paginaAdelante.querySelector(".pagina__cuerpo");
   const necesitaScroll =
@@ -398,7 +361,7 @@ function actualizarModoTactil() {
 
 function irA(direccion) {
   if (animando) return;
-  if (TOTAL_PAGINAS <= 1) return; // no tiene sentido "pasar página" con 0 o 1 marca
+  if (TOTAL_PAGINAS <= 1) return;
 
   animando = true;
   const destino = prepararFlip(direccion);
@@ -426,19 +389,14 @@ function anterior() {
 }
 
 /* ---------------------------------------------------------------------
-   ARRASTRE CON MOUSE (computador) Y TOUCH NATIVO (celulares/tablets)
+   ARRASTRE CON MOUSE Y TOUCH NATIVO 
    ---------------------------------------------------------------------
-   Se usan APIs separadas a propósito: Pointer Events tiene comportamientos
-   inconsistentes en navegadores móviles reales (sobre todo iOS), así que
-   para el dedo se usan los eventos táctiles clásicos (más compatibles),
-   y para el mouse, sus propios eventos.
    ------------------------------------------------------------------- */
-const UMBRAL_COMPLETAR = 0.22; // fracción del ancho para confirmar el cambio de página
-const UMBRAL_INTENCION = 6; // px mínimos de movimiento antes de considerarlo un arrastre real (y no un tap)
+const UMBRAL_COMPLETAR = 0.22;
+const UMBRAL_INTENCION = 6;
 
 function iniciarArrastre(x, y, objetivo) {
   if (animando) return;
-  // Ignorar si el gesto empezó sobre un botón/enlace (para no robar el clic)
   if (objetivo && objetivo.closest("a, button")) return;
 
   arrastrando = true;
@@ -450,8 +408,6 @@ function iniciarArrastre(x, y, objetivo) {
   paginaAdelante.classList.remove("animando");
 }
 
-// Devuelve true si el llamador debe hacer preventDefault() sobre el evento
-// (es decir, si el gesto ya se confirmó como horizontal).
 function moverArrastre(x, y) {
   if (!arrastrando) return false;
 
@@ -468,11 +424,7 @@ function moverArrastre(x, y) {
     )
       return false;
 
-    // Solo si la página tiene contenido para desplazar verticalmente
-    // consideramos que el gesto podría ser un scroll en vez de un swipe.
     if (paginaNecesitaScroll && Math.abs(deltaY) > Math.abs(delta)) {
-      // Es un scroll vertical: soltamos por completo y dejamos que el
-      // navegador lo maneje de forma nativa.
       direccionGesto = "vertical";
       arrastrando = false;
       paginaAdelante.classList.remove("arrastrando");
@@ -491,7 +443,7 @@ function moverArrastre(x, y) {
 
   const progreso = Math.max(-1, Math.min(1, delta / ancho));
   paginaAdelante.style.transform = `rotateY(${progreso * 180}deg)`;
-  return true; // gesto horizontal confirmado: el llamador debe evitar scroll/zoom nativo
+  return true;
 }
 
 function soltarArrastre() {
@@ -528,7 +480,6 @@ function soltarArrastre() {
       finalizarFlip(direccionFinal, destino);
     });
   } else {
-    // no se alcanzó el umbral: regresa suavemente a su lugar
     requestAnimationFrame(() => {
       paginaAdelante.style.transform = "rotateY(0deg)";
     });
@@ -543,7 +494,7 @@ function soltarArrastre() {
 }
 
 /* ---- Touch (celulares y tablets) ---- */
-let ultimoToqueTs = 0; // para ignorar los eventos de "mouse" sintéticos que algunos navegadores disparan después de un toque
+let ultimoToqueTs = 0;
 
 libro.addEventListener(
   "touchstart",
@@ -560,9 +511,9 @@ libro.addEventListener(
   (e) => {
     const t = e.touches[0];
     const esHorizontal = moverArrastre(t.clientX, t.clientY);
-    if (esHorizontal) e.preventDefault(); // evita que la página haga scroll/zoom mientras se pasa la hoja
+    if (esHorizontal) e.preventDefault();
   },
-  { passive: false }, // necesario para poder llamar preventDefault()
+  { passive: false },
 );
 
 libro.addEventListener("touchend", soltarArrastre, { passive: true });
@@ -570,7 +521,7 @@ libro.addEventListener("touchcancel", soltarArrastre, { passive: true });
 
 /* ---- Mouse (computador) ---- */
 libro.addEventListener("mousedown", (e) => {
-  if (Date.now() - ultimoToqueTs < 800) return; // era un toque, no un clic de mouse real
+  if (Date.now() - ultimoToqueTs < 800) return;
   iniciarArrastre(e.clientX, e.clientY, e.target);
 });
 
@@ -594,8 +545,6 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") anterior();
 });
 
-// Si la ventana cambia de tamaño (o el celular gira), puede cambiar si la
-// página actual necesita scroll o no.
 window.addEventListener("resize", actualizarModoTactil);
 
 /* ---------------------------------------------------------------------
