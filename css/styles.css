@@ -4,26 +4,29 @@
    ===================================================================== */
 
 :root {
-  --verde-oscuro:   #1B4332;
-  --verde-medio:    #2D6A4F;
-  --cafe-oscuro:    #3C2A21;
-  --cafe-medio:     #7F5539;
-  --cafe-claro:     #C7A17A;
-  --crema:          #FBF6ED;
-  --crema-panel:    #F4EDE0;
-  --dorado:         #B8863B;
-  --blanco:         #FFFFFF;
-  --sombra:         rgba(60, 42, 33, 0.14);
+  --verde-oscuro: #1b4332;
+  --verde-medio: #2d6a4f;
+  --cafe-oscuro: #3c2a21;
+  --cafe-medio: #7f5539;
+  --cafe-claro: #c7a17a;
+  --crema: #fbf6ed;
+  --crema-panel: #f4ede0;
+  --dorado: #b8863b;
+  --blanco: #ffffff;
+  --sombra: rgba(60, 42, 33, 0.14);
 
-  --fuente-titular: 'Fraunces', Georgia, serif;
-  --fuente-texto:   'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --fuente-titular: "Fraunces", Georgia, serif;
+  --fuente-texto: "Work Sans", -apple-system, BlinkMacSystemFont, sans-serif;
 
   --radio: 14px;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   overscroll-behavior: none; /* evita rebotes/gestos del navegador que interfieran con el swipe */
@@ -32,7 +35,7 @@ html, body {
 body {
   font-family: var(--fuente-texto);
   color: var(--cafe-oscuro);
-  background: linear-gradient(180deg, #EFE6D4 0%, var(--crema) 22%);
+  background: linear-gradient(180deg, #efe6d4 0%, var(--crema) 22%);
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -44,7 +47,7 @@ body {
 .cabecera {
   padding: 14px 20px;
   background: var(--verde-oscuro);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
   flex: 0 0 auto;
   z-index: 20;
 }
@@ -90,7 +93,22 @@ body {
   max-width: 720px;
   height: min(78vh, 760px);
   perspective: 1900px;
-  touch-action: pan-y; /* deja que el eje horizontal lo maneje nuestro JS (swipe) */
+  touch-action: none; /* el gesto (en cualquier dirección) lo maneja por completo nuestro JS */
+}
+
+/* En navegadores móviles que lo soportan, usar la altura de viewport
+   "dinámica" evita que el catálogo cambie de tamaño cuando la barra
+   de direcciones se oculta o aparece al deslizar */
+@supports (height: 100dvh) {
+  .libro {
+    height: min(78dvh, 760px);
+  }
+}
+
+.pagina img {
+  -webkit-user-drag: none; /* evita que el navegador intente "arrastrar la imagen" en vez de pasar la página */
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .pagina {
@@ -98,7 +116,9 @@ body {
   inset: 0;
   background: var(--blanco);
   border-radius: var(--radio);
-  box-shadow: 0 18px 40px var(--sombra), 0 2px 8px rgba(60,42,33,0.08);
+  box-shadow:
+    0 18px 40px var(--sombra),
+    0 2px 8px rgba(60, 42, 33, 0.08);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -121,7 +141,7 @@ body {
 }
 
 .pagina--adelante.animando {
-  transition: transform 0.46s cubic-bezier(.4,.05,.2,1);
+  transition: transform 0.46s cubic-bezier(0.4, 0.05, 0.2, 1);
 }
 
 /* ------------- contenido interno de cada página (marca) ------------- */
@@ -132,7 +152,16 @@ body {
   flex-direction: column;
   padding: 26px 26px 18px;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  scrollbar-gutter: stable; /* reserva el espacio de la barra de scroll siempre, así no "salta" el ancho al aparecer/desaparecer */
+}
+
+/* Mientras la página gira o se arrastra, se congela el scroll interno para
+   que ningún cambio de contenido/alto interfiera con la animación */
+.pagina--adelante.animando .pagina__cuerpo,
+.pagina--adelante.arrastrando .pagina__cuerpo {
+  overflow-y: hidden;
 }
 
 /* Logo de la marca, grande, antes de los productos */
@@ -141,7 +170,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 110px;
+  height: 110px;
   margin-bottom: 22px;
 }
 
@@ -170,11 +199,17 @@ body {
   font-weight: 500;
   letter-spacing: 0.01em;
   border-radius: 999px;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
-.pagina__boton:hover { background: var(--verde-medio); }
-.pagina__boton:active { transform: scale(0.97); }
+.pagina__boton:hover {
+  background: var(--verde-medio);
+}
+.pagina__boton:active {
+  transform: scale(0.97);
+}
 
 /* ------------- cuadrícula de productos, adaptable por cantidad ------------- */
 
@@ -229,8 +264,8 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid rgba(124,85,57,0.12);
-  box-shadow: 0 2px 6px rgba(60,42,33,0.06);
+  border: 1px solid rgba(124, 85, 57, 0.12);
+  box-shadow: 0 2px 6px rgba(60, 42, 33, 0.06);
 }
 
 .producto__imagen {
@@ -255,17 +290,23 @@ body {
   border: none;
   background: var(--blanco);
   color: var(--cafe-oscuro);
-  box-shadow: 0 6px 16px rgba(60,42,33,0.18);
+  box-shadow: 0 6px 16px rgba(60, 42, 33, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
   z-index: 10;
 }
 
-.flecha:hover { background: var(--crema-panel); }
-.flecha:active { transform: translateY(-50%) scale(0.93); }
+.flecha:hover {
+  background: var(--crema-panel);
+}
+.flecha:active {
+  transform: translateY(-50%) scale(0.93);
+}
 
 .flecha:disabled {
   opacity: 0.3;
@@ -273,8 +314,12 @@ body {
   pointer-events: none;
 }
 
-.flecha--izq { left: max(4px, calc(50% - 400px)); }
-.flecha--der { right: max(4px, calc(50% - 400px)); }
+.flecha--izq {
+  left: max(4px, calc(50% - 400px));
+}
+.flecha--der {
+  right: max(4px, calc(50% - 400px));
+}
 
 .indicador {
   margin-top: 16px;
@@ -299,22 +344,57 @@ body {
 /* ===================== RESPONSIVE ===================== */
 
 @media (max-width: 640px) {
-  .libro { height: min(74vh, 640px); touch-action: pan-y; }
-  .pagina__cuerpo { padding: 20px 16px 14px; }
-  .flecha { width: 38px; height: 38px; }
-  .flecha--izq { left: 6px; }
-  .flecha--der { right: 6px; }
+  .libro {
+    height: min(74vh, 640px);
+  }
+}
+
+@supports (height: 100dvh) {
+  @media (max-width: 640px) {
+    .libro {
+      height: min(74dvh, 640px);
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .pagina__cuerpo {
+    padding: 20px 16px 14px;
+  }
+  .flecha {
+    width: 38px;
+    height: 38px;
+  }
+  .flecha--izq {
+    left: 6px;
+  }
+  .flecha--der {
+    right: 6px;
+  }
   .grilla--2,
-  .grilla--3-4 { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .producto { padding: 9px; }
-  .producto__boton { padding: 8px 16px; }
+  .grilla--3-4 {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .producto {
+    padding: 9px;
+  }
+  .producto__boton {
+    padding: 8px 16px;
+  }
 }
 
 @media (max-width: 420px) {
-  .grilla--2 { grid-template-columns: 1fr; }
+  .grilla--2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pagina--adelante.animando { transition-duration: 0.01ms; }
-  .producto__boton { transition: none; }
+  .pagina--adelante.animando {
+    transition-duration: 0.01ms;
+  }
+  .producto__boton {
+    transition: none;
+  }
 }
