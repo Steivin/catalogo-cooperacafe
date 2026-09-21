@@ -324,6 +324,22 @@ function finalizarFlip(direccion, destino) {
   paginaAtras.innerHTML = "";
   animando = false;
   actualizarIndicador();
+  actualizarModoTactil();
+}
+
+/* ---------------------------------------------------------------------
+   ¿La página visible necesita scroll vertical?
+   ---------------------------------------------------------------------
+   Si cabe completa, dejamos el swipe horizontal con control total (más
+   fluido). Si no cabe (varias fotos + botón más abajo), le devolvemos al
+   navegador el control del scroll vertical nativo y solo tomamos el
+   gesto cuando es claramente horizontal.
+   ------------------------------------------------------------------- */
+function actualizarModoTactil() {
+  const cuerpo = paginaAdelante.querySelector(".pagina__cuerpo");
+  const necesitaScroll =
+    !!cuerpo && cuerpo.scrollHeight > cuerpo.clientHeight + 1;
+  libro.style.touchAction = necesitaScroll ? "pan-y" : "none";
 }
 
 function irA(direccion) {
@@ -369,6 +385,7 @@ function alIniciarArrastre(e) {
   arrastrando = true;
   direccionGesto = null;
   origenX = e.clientX;
+  origenY = e.clientY;
   ultimoDeltaX = 0;
   paginaAdelante.classList.add("arrastrando");
   paginaAdelante.classList.remove("animando");
@@ -378,17 +395,30 @@ function alIniciarArrastre(e) {
 function alMoverArrastre(e) {
   if (!arrastrando) return;
 
-  // touch-action:none en .libro ya le pide al navegador que no haga NADA
-  // por su cuenta con este gesto (ni scroll ni zoom); aun así, prevenimos
-  // el comportamiento por defecto para máxima compatibilidad.
-  e.preventDefault?.();
-
   const delta = e.clientX - origenX;
+  const deltaY = e.clientY - origenY;
   ultimoDeltaX = delta;
   const ancho = libro.clientWidth || 1;
+  const paginaNecesitaScroll = libro.style.touchAction === "pan-y";
 
   if (direccionGesto === null) {
-    if (Math.abs(delta) < UMBRAL_INTENCION) return; // pequeño umbral para distinguir de un tap
+    if (
+      Math.abs(delta) < UMBRAL_INTENCION &&
+      Math.abs(deltaY) < UMBRAL_INTENCION
+    )
+      return;
+
+    // Solo si la página tiene contenido para desplazar verticalmente
+    // consideramos que el gesto podría ser un scroll en vez de un swipe.
+    if (paginaNecesitaScroll && Math.abs(deltaY) > Math.abs(delta)) {
+      // Es un scroll vertical: soltamos por completo y dejamos que el
+      // navegador lo maneje de forma nativa.
+      direccionGesto = "vertical";
+      arrastrando = false;
+      paginaAdelante.classList.remove("arrastrando");
+      return;
+    }
+
     if (marcas.length <= 1) {
       direccionGesto = "bloqueado";
       return;
@@ -396,7 +426,11 @@ function alMoverArrastre(e) {
     direccionGesto = delta < 0 ? "next" : "prev";
     prepararFlip(direccionGesto);
   }
-  if (direccionGesto === "bloqueado") return;
+  if (direccionGesto === "bloqueado" || direccionGesto === "vertical") return;
+
+  // Ya es un gesto horizontal confirmado: evita que el navegador haga
+  // scroll o zoom con el mismo gesto.
+  e.preventDefault?.();
 
   const progreso = Math.max(-1, Math.min(1, delta / ancho));
   paginaAdelante.style.transform = `rotateY(${progreso * 180}deg)`;
@@ -471,9 +505,14 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") anterior();
 });
 
+// Si la ventana cambia de tamaño (o el celular gira), puede cambiar si la
+// página actual necesita scroll o no.
+window.addEventListener("resize", actualizarModoTactil);
+
 /* ---------------------------------------------------------------------
    INICIO
    ------------------------------------------------------------------- */
 precargarImagenes();
 renderPagina(paginaAdelante, marcas[indiceActual]);
 actualizarIndicador();
+actualizarModoTactil();

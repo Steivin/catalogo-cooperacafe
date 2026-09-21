@@ -93,7 +93,7 @@ body {
   max-width: 720px;
   height: min(78vh, 760px);
   perspective: 1900px;
-  touch-action: none; /* el gesto (en cualquier dirección) lo maneja por completo nuestro JS */
+  touch-action: none; /* por defecto el gesto lo maneja nuestro JS; se cambia a pan-y por JS cuando la página necesita scroll vertical */
 }
 
 /* En navegadores móviles que lo soportan, usar la altura de viewport
