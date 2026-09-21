@@ -258,20 +258,20 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 10px;
-  background: var(--crema-panel);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  border: 1px solid rgba(124, 85, 57, 0.12);
-  box-shadow: 0 2px 6px rgba(60, 42, 33, 0.06);
+  overflow: visible; /* la sombra de abajo sale un poco de este recuadro invisible */
 }
 
 .producto__imagen {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain; /* conserva proporciones originales, sin deformar */
+  border-radius: 6px;
+  filter: drop-shadow(
+    0 3px 8px rgba(60, 42, 33, 0.22)
+  ); /* sombra que sigue el contorno real de cada foto, en vez de un recuadro parejo */
 }
 
 .producto__imagen-cont.sin-imagen {
