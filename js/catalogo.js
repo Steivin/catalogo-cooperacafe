@@ -178,6 +178,19 @@ const marcas = [
      hasta completar las ~20 marcas de COOPERACAFE. */
 ];
 
+/* Logo de COOPERACAFE usado en la portada (mismo que el del encabezado) */
+const LOGO_COOPERACAFE =
+  "https://cooperacafe.com/wp-content/uploads/2023/03/Recurso-1.png";
+
+/* Total de páginas del libro: la portada + cada marca */
+const TOTAL_PAGINAS = marcas.length + 1;
+
+/* índice 0 = portada; índice 1..N = marcas[0..N-1] */
+function contenidoEnIndice(indice) {
+  if (indice === 0) return { esPortada: true };
+  return marcas[indice - 1];
+}
+
 /* ---------------------------------------------------------------------
    ESTADO Y REFERENCIAS DEL DOM
    ------------------------------------------------------------------- */
@@ -204,6 +217,7 @@ let direccionGesto = null; // 'next' | 'prev' | 'bloqueado' | null
    ------------------------------------------------------------------- */
 function precargarImagenes() {
   const rutas = new Set();
+  rutas.add(LOGO_COOPERACAFE);
   marcas.forEach((marca) => {
     if (marca.logo) rutas.add(marca.logo);
     marca.productos.forEach((p) => {
@@ -238,19 +252,26 @@ function manejarErrorImagen(img) {
   img.onerror = null;
   img.src = imagenPlaceholder();
   img
-    .closest(".producto__imagen-cont, .pagina__logo-cont")
+    .closest(".producto__imagen-cont, .pagina__logo-cont, .portada__logo-cont")
     ?.classList.add("sin-imagen");
 }
 window.manejarErrorImagen = manejarErrorImagen;
 
 /* ---------------------------------------------------------------------
-   RENDERIZADO DE UNA PÁGINA (una marca completa)
+   RENDERIZADO DE UNA PÁGINA (portada o marca completa)
+   ---------------------------------------------------------------------
+   La cuadrícula de fotos usa filas/columnas calculadas (no un tamaño de
+   celda fijo), así que siempre reparte el espacio vertical disponible
+   entre las fotos que haya — nunca se pasa de la pantalla ni necesita
+   scroll, sea un celular pequeño o una pantalla grande.
    ------------------------------------------------------------------- */
-function claseGrilla(cantidad) {
-  if (cantidad <= 1) return "grilla--1";
-  if (cantidad === 2) return "grilla--2";
-  if (cantidad <= 4) return "grilla--3-4";
-  return "grilla--muchos";
+function calcularGrid(cantidad) {
+  if (cantidad <= 1) return { columnas: 1, filas: 1 };
+  if (cantidad === 2) return { columnas: 2, filas: 1 };
+  if (cantidad <= 4) return { columnas: 2, filas: 2 };
+  const columnas = Math.ceil(Math.sqrt(cantidad));
+  const filas = Math.ceil(cantidad / columnas);
+  return { columnas, filas };
 }
 
 function tarjetaProducto(producto) {
@@ -267,11 +288,32 @@ function tarjetaProducto(producto) {
     </article>`;
 }
 
-function renderPagina(elemento, marca) {
-  if (!marca) {
+function renderPagina(elemento, contenido) {
+  if (!contenido) {
     elemento.innerHTML = "";
     return;
   }
+
+  if (contenido.esPortada) {
+    elemento.innerHTML = `
+      <div class="portada">
+        <h1 class="portada__titulo">Portafolio de Productos<br>Provisión Agrícola</h1>
+        <div class="portada__logo-cont">
+          <img
+            class="portada__logo"
+            src="${LOGO_COOPERACAFE}"
+            alt="COOPERACAFE"
+            onerror="manejarErrorImagen(this)"
+          >
+        </div>
+      </div>`;
+    return;
+  }
+
+  const marca = contenido;
+  const { columnas, filas } = calcularGrid(marca.productos.length);
+  const estiloGrilla = `grid-template-columns: repeat(${columnas}, 1fr); grid-template-rows: repeat(${filas}, 1fr);`;
+
   elemento.innerHTML = `
     <div class="pagina__cuerpo">
       <div class="pagina__logo-cont">
@@ -282,7 +324,7 @@ function renderPagina(elemento, marca) {
           onerror="manejarErrorImagen(this)"
         >
       </div>
-      <div class="grilla ${claseGrilla(marca.productos.length)}">
+      <div class="grilla" style="${estiloGrilla}">
         ${marca.productos.map(tarjetaProducto).join("")}
       </div>
       <a class="pagina__boton" href="${marca.enlace}" target="_blank" rel="noopener noreferrer">
@@ -292,7 +334,10 @@ function renderPagina(elemento, marca) {
 }
 
 function actualizarIndicador() {
-  indicador.textContent = `Página ${indiceActual + 1} de ${marcas.length}`;
+  indicador.textContent =
+    indiceActual === 0
+      ? "Portada"
+      : `Página ${indiceActual} de ${marcas.length}`;
   // Con navegación circular, las flechas nunca se deshabilitan por llegar al final/inicio.
 }
 
@@ -300,13 +345,13 @@ function actualizarIndicador() {
    ANIMACIÓN DE PASO DE PÁGINA (efecto "hoja de libro")
    ------------------------------------------------------------------- */
 function prepararFlip(direccion) {
-  // Navegación circular: después de la última marca se vuelve a la primera,
-  // y antes de la primera se vuelve a la última.
+  // Navegación circular: después de la última marca se vuelve a la portada,
+  // y antes de la portada se vuelve a la última marca.
   const destino =
     direccion === "next"
-      ? (indiceActual + 1) % marcas.length
-      : (indiceActual - 1 + marcas.length) % marcas.length;
-  renderPagina(paginaAtras, marcas[destino]);
+      ? (indiceActual + 1) % TOTAL_PAGINAS
+      : (indiceActual - 1 + TOTAL_PAGINAS) % TOTAL_PAGINAS;
+  renderPagina(paginaAtras, contenidoEnIndice(destino));
   paginaAdelante.style.transformOrigin =
     direccion === "next" ? "left center" : "right center";
   return destino;
@@ -314,7 +359,7 @@ function prepararFlip(direccion) {
 
 function finalizarFlip(direccion, destino) {
   indiceActual = destino;
-  renderPagina(paginaAdelante, marcas[indiceActual]);
+  renderPagina(paginaAdelante, contenidoEnIndice(indiceActual));
   paginaAdelante.classList.remove("animando", "arrastrando");
   paginaAdelante.style.transition = "none";
   paginaAdelante.style.transform = "rotateY(0deg)";
@@ -344,7 +389,7 @@ function actualizarModoTactil() {
 
 function irA(direccion) {
   if (animando) return;
-  if (marcas.length <= 1) return; // no tiene sentido "pasar página" con 0 o 1 marca
+  if (TOTAL_PAGINAS <= 1) return; // no tiene sentido "pasar página" con 0 o 1 marca
 
   animando = true;
   const destino = prepararFlip(direccion);
@@ -372,31 +417,37 @@ function anterior() {
 }
 
 /* ---------------------------------------------------------------------
-   ARRASTRE CON MOUSE Y DESLIZAMIENTO TÁCTIL (Pointer Events unifica ambos)
+   ARRASTRE CON MOUSE (computador) Y TOUCH NATIVO (celulares/tablets)
+   ---------------------------------------------------------------------
+   Se usan APIs separadas a propósito: Pointer Events tiene comportamientos
+   inconsistentes en navegadores móviles reales (sobre todo iOS), así que
+   para el dedo se usan los eventos táctiles clásicos (más compatibles),
+   y para el mouse, sus propios eventos.
    ------------------------------------------------------------------- */
 const UMBRAL_COMPLETAR = 0.22; // fracción del ancho para confirmar el cambio de página
 const UMBRAL_INTENCION = 6; // px mínimos de movimiento antes de considerarlo un arrastre real (y no un tap)
 
-function alIniciarArrastre(e) {
+function iniciarArrastre(x, y, objetivo) {
   if (animando) return;
   // Ignorar si el gesto empezó sobre un botón/enlace (para no robar el clic)
-  if (e.target.closest("a, button")) return;
+  if (objetivo && objetivo.closest("a, button")) return;
 
   arrastrando = true;
   direccionGesto = null;
-  origenX = e.clientX;
-  origenY = e.clientY;
+  origenX = x;
+  origenY = y;
   ultimoDeltaX = 0;
   paginaAdelante.classList.add("arrastrando");
   paginaAdelante.classList.remove("animando");
-  libro.setPointerCapture?.(e.pointerId);
 }
 
-function alMoverArrastre(e) {
-  if (!arrastrando) return;
+// Devuelve true si el llamador debe hacer preventDefault() sobre el evento
+// (es decir, si el gesto ya se confirmó como horizontal).
+function moverArrastre(x, y) {
+  if (!arrastrando) return false;
 
-  const delta = e.clientX - origenX;
-  const deltaY = e.clientY - origenY;
+  const delta = x - origenX;
+  const deltaY = y - origenY;
   ultimoDeltaX = delta;
   const ancho = libro.clientWidth || 1;
   const paginaNecesitaScroll = libro.style.touchAction === "pan-y";
@@ -406,7 +457,7 @@ function alMoverArrastre(e) {
       Math.abs(delta) < UMBRAL_INTENCION &&
       Math.abs(deltaY) < UMBRAL_INTENCION
     )
-      return;
+      return false;
 
     // Solo si la página tiene contenido para desplazar verticalmente
     // consideramos que el gesto podría ser un scroll en vez de un swipe.
@@ -416,27 +467,25 @@ function alMoverArrastre(e) {
       direccionGesto = "vertical";
       arrastrando = false;
       paginaAdelante.classList.remove("arrastrando");
-      return;
+      return false;
     }
 
-    if (marcas.length <= 1) {
+    if (TOTAL_PAGINAS <= 1) {
       direccionGesto = "bloqueado";
-      return;
+      return false;
     }
     direccionGesto = delta < 0 ? "next" : "prev";
     prepararFlip(direccionGesto);
   }
-  if (direccionGesto === "bloqueado" || direccionGesto === "vertical") return;
-
-  // Ya es un gesto horizontal confirmado: evita que el navegador haga
-  // scroll o zoom con el mismo gesto.
-  e.preventDefault?.();
+  if (direccionGesto === "bloqueado" || direccionGesto === "vertical")
+    return false;
 
   const progreso = Math.max(-1, Math.min(1, delta / ancho));
   paginaAdelante.style.transform = `rotateY(${progreso * 180}deg)`;
+  return true; // gesto horizontal confirmado: el llamador debe evitar scroll/zoom nativo
 }
 
-function alSoltarArrastre() {
+function soltarArrastre() {
   if (!arrastrando) {
     direccionGesto = null;
     return;
@@ -457,8 +506,8 @@ function alSoltarArrastre() {
     animando = true;
     const destino =
       direccionGesto === "next"
-        ? (indiceActual + 1) % marcas.length
-        : (indiceActual - 1 + marcas.length) % marcas.length;
+        ? (indiceActual + 1) % TOTAL_PAGINAS
+        : (indiceActual - 1 + TOTAL_PAGINAS) % TOTAL_PAGINAS;
     const anguloFinal = direccionGesto === "next" ? -180 : 180;
     const direccionFinal = direccionGesto;
     requestAnimationFrame(() => {
@@ -484,14 +533,45 @@ function alSoltarArrastre() {
   direccionGesto = null;
 }
 
-libro.addEventListener("pointerdown", alIniciarArrastre);
-libro.addEventListener("pointermove", alMoverArrastre);
-libro.addEventListener("pointerup", alSoltarArrastre);
-libro.addEventListener("pointercancel", alSoltarArrastre);
-libro.addEventListener("pointerleave", (e) => {
-  // Solo soltar si el botón del mouse ya no está presionado (evita cortar el arrastre táctil)
-  if (arrastrando && e.pointerType === "mouse" && e.buttons === 0)
-    alSoltarArrastre();
+/* ---- Touch (celulares y tablets) ---- */
+let ultimoToqueTs = 0; // para ignorar los eventos de "mouse" sintéticos que algunos navegadores disparan después de un toque
+
+libro.addEventListener(
+  "touchstart",
+  (e) => {
+    ultimoToqueTs = Date.now();
+    const t = e.touches[0];
+    iniciarArrastre(t.clientX, t.clientY, e.target);
+  },
+  { passive: true },
+);
+
+libro.addEventListener(
+  "touchmove",
+  (e) => {
+    const t = e.touches[0];
+    const esHorizontal = moverArrastre(t.clientX, t.clientY);
+    if (esHorizontal) e.preventDefault(); // evita que la página haga scroll/zoom mientras se pasa la hoja
+  },
+  { passive: false }, // necesario para poder llamar preventDefault()
+);
+
+libro.addEventListener("touchend", soltarArrastre, { passive: true });
+libro.addEventListener("touchcancel", soltarArrastre, { passive: true });
+
+/* ---- Mouse (computador) ---- */
+libro.addEventListener("mousedown", (e) => {
+  if (Date.now() - ultimoToqueTs < 800) return; // era un toque, no un clic de mouse real
+  iniciarArrastre(e.clientX, e.clientY, e.target);
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!arrastrando) return;
+  moverArrastre(e.clientX, e.clientY);
+});
+
+window.addEventListener("mouseup", () => {
+  if (arrastrando) soltarArrastre();
 });
 
 /* ---------------------------------------------------------------------
@@ -513,6 +593,6 @@ window.addEventListener("resize", actualizarModoTactil);
    INICIO
    ------------------------------------------------------------------- */
 precargarImagenes();
-renderPagina(paginaAdelante, marcas[indiceActual]);
+renderPagina(paginaAdelante, contenidoEnIndice(indiceActual));
 actualizarIndicador();
 actualizarModoTactil();

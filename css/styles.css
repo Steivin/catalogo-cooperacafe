@@ -53,7 +53,7 @@ body {
 }
 
 .cabecera__interior {
-  max-width: 720px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -90,7 +90,7 @@ body {
 .libro {
   position: relative;
   width: 100%;
-  max-width: 720px;
+  max-width: 1200px;
   height: min(78vh, 760px);
   perspective: 1900px;
   touch-action: none; /* por defecto el gesto lo maneja nuestro JS; se cambia a pan-y por JS cuando la página necesita scroll vertical */
@@ -112,9 +112,13 @@ body {
 }
 
 .pagina {
-  position: absolute;
+  position: absolute; /* ya sirve como referencia de posición para la capa ::before de abajo */
   inset: 0;
   background: var(--blanco);
+  background-image: url("../assets/Fondo.jpg");
+  background-size: cover; /* llena la tarjeta completa en cualquier tamaño, sin bordes blancos */
+  background-repeat: no-repeat;
+  background-position: right center; /* ancla el borde derecho (donde están las ilustraciones) para que siempre se vea completo; solo recorta del lado izquierdo, que es papel liso */
   border-radius: var(--radio);
   box-shadow:
     0 18px 40px var(--sombra),
@@ -122,6 +126,25 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* Capa semitransparente sobre el fondo, para que el logo, las fotos y el
+   botón se sigan viendo nítidos aunque la imagen de fondo tenga mucho
+   contraste o color. Ajusta la opacidad (el último número, 0 a 1) a gusto:
+   más alto = fondo más discreto; más bajo = fondo más visible. */
+.pagina::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.45);
+  pointer-events: none; /* no bloquea clics ni el arrastre */
+}
+
+/* El contenido debe ir por ENCIMA de esa capa */
+.pagina__cuerpo,
+.portada {
+  position: relative;
+  z-index: 1;
 }
 
 .pagina--atras {
@@ -211,53 +234,30 @@ body {
   transform: scale(0.97);
 }
 
-/* ------------- cuadrícula de productos, adaptable por cantidad ------------- */
+/* ------------- cuadrícula de productos, adaptable por cantidad -------------
+   Las filas y columnas exactas las calcula JS (según la cantidad de fotos)
+   y se aplican como estilo en línea, con grid-template-rows: 1fr por fila.
+   Así la cuadrícula SIEMPRE reparte el alto disponible entre las fotos que
+   haya, sin desbordar ni necesitar scroll, en cualquier tamaño de pantalla. */
 
 .grilla {
   flex: 1 1 auto;
   display: grid;
-  gap: 18px;
-  align-content: center;
-}
-
-/* 1 producto: protagonismo total */
-.grilla--1 {
-  grid-template-columns: 1fr;
-  place-items: center;
-}
-.grilla--1 .producto {
-  max-width: 420px;
-  width: 100%;
-}
-.grilla--1 .producto__imagen-cont {
-  aspect-ratio: 4 / 3;
-}
-
-/* 2 productos: equilibrados lado a lado */
-.grilla--2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-/* 3 o 4 productos: cuadrícula ordenada */
-.grilla--3-4 {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-/* 5 o más: se adapta automáticamente al espacio disponible */
-.grilla--muchos {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  min-height: 0;
 }
 
 /* ------------- tarjeta de producto ------------- */
 
 .producto {
   display: flex;
+  min-height: 0;
 }
 
 .producto__imagen-cont {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
   border-radius: 10px;
   background: var(--crema-panel);
   display: flex;
@@ -269,13 +269,52 @@ body {
 }
 
 .producto__imagen {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain; /* conserva proporciones originales, sin deformar */
 }
 
 .producto__imagen-cont.sin-imagen {
   color: var(--cafe-claro);
+}
+
+/* ------------- portada ------------- */
+
+.portada {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  text-align: center;
+  padding: 20px;
+}
+
+.portada__titulo {
+  font-family: var(--fuente-titular);
+  font-weight: 600;
+  font-size: clamp(24px, 5vw, 38px);
+  line-height: 1.25;
+  color: var(--verde-oscuro);
+  margin: 0;
+}
+
+.portada__logo-cont {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portada__logo {
+  max-width: 70%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.portada__logo-cont.sin-imagen .portada__logo {
+  max-height: 100px;
+  opacity: 0.6;
 }
 
 /* ===================== FLECHAS Y CONTROLES ===================== */
@@ -315,10 +354,10 @@ body {
 }
 
 .flecha--izq {
-  left: max(4px, calc(50% - 400px));
+  left: max(4px, calc(50% - 620px));
 }
 .flecha--der {
-  right: max(4px, calc(50% - 400px));
+  right: max(4px, calc(50% - 620px));
 }
 
 .indicador {
@@ -371,22 +410,8 @@ body {
   .flecha--der {
     right: 6px;
   }
-  .grilla--2,
-  .grilla--3-4 {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .producto {
-    padding: 9px;
-  }
-  .producto__boton {
-    padding: 8px 16px;
-  }
-}
-
-@media (max-width: 420px) {
-  .grilla--2 {
-    grid-template-columns: 1fr;
+  .grilla {
+    gap: 10px;
   }
 }
 
@@ -394,7 +419,7 @@ body {
   .pagina--adelante.animando {
     transition-duration: 0.01ms;
   }
-  .producto__boton {
+  .pagina__boton {
     transition: none;
   }
 }
