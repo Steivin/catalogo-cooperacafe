@@ -192,9 +192,8 @@ let indiceActual = 0;
 let animando = false; // true mientras corre la animación de paso de página
 let arrastrando = false; // true mientras el usuario arrastra/desliza
 let origenX = 0;
-let origenY = 0;
 let ultimoDeltaX = 0;
-let direccionGesto = null; // 'next' | 'prev' | 'bloqueado' | 'vertical' | null
+let direccionGesto = null; // 'next' | 'prev' | 'bloqueado' | null
 
 /* ---------------------------------------------------------------------
    PRECARGA DE IMÁGENES
@@ -294,15 +293,19 @@ function renderPagina(elemento, marca) {
 
 function actualizarIndicador() {
   indicador.textContent = `Página ${indiceActual + 1} de ${marcas.length}`;
-  btnAnterior.disabled = indiceActual === 0;
-  btnSiguiente.disabled = indiceActual === marcas.length - 1;
+  // Con navegación circular, las flechas nunca se deshabilitan por llegar al final/inicio.
 }
 
 /* ---------------------------------------------------------------------
    ANIMACIÓN DE PASO DE PÁGINA (efecto "hoja de libro")
    ------------------------------------------------------------------- */
 function prepararFlip(direccion) {
-  const destino = direccion === "next" ? indiceActual + 1 : indiceActual - 1;
+  // Navegación circular: después de la última marca se vuelve a la primera,
+  // y antes de la primera se vuelve a la última.
+  const destino =
+    direccion === "next"
+      ? (indiceActual + 1) % marcas.length
+      : (indiceActual - 1 + marcas.length) % marcas.length;
   renderPagina(paginaAtras, marcas[destino]);
   paginaAdelante.style.transformOrigin =
     direccion === "next" ? "left center" : "right center";
@@ -325,8 +328,7 @@ function finalizarFlip(direccion, destino) {
 
 function irA(direccion) {
   if (animando) return;
-  if (direccion === "next" && indiceActual >= marcas.length - 1) return;
-  if (direccion === "prev" && indiceActual <= 0) return;
+  if (marcas.length <= 1) return; // no tiene sentido "pasar página" con 0 o 1 marca
 
   animando = true;
   const destino = prepararFlip(direccion);
@@ -357,7 +359,7 @@ function anterior() {
    ARRASTRE CON MOUSE Y DESLIZAMIENTO TÁCTIL (Pointer Events unifica ambos)
    ------------------------------------------------------------------- */
 const UMBRAL_COMPLETAR = 0.22; // fracción del ancho para confirmar el cambio de página
-const UMBRAL_INTENCION = 8; // px mínimos antes de decidir si el gesto es horizontal o vertical
+const UMBRAL_INTENCION = 6; // px mínimos de movimiento antes de considerarlo un arrastre real (y no un tap)
 
 function alIniciarArrastre(e) {
   if (animando) return;
@@ -367,7 +369,6 @@ function alIniciarArrastre(e) {
   arrastrando = true;
   direccionGesto = null;
   origenX = e.clientX;
-  origenY = e.clientY;
   ultimoDeltaX = 0;
   paginaAdelante.classList.add("arrastrando");
   paginaAdelante.classList.remove("animando");
@@ -376,45 +377,26 @@ function alIniciarArrastre(e) {
 
 function alMoverArrastre(e) {
   if (!arrastrando) return;
+
+  // touch-action:none en .libro ya le pide al navegador que no haga NADA
+  // por su cuenta con este gesto (ni scroll ni zoom); aun así, prevenimos
+  // el comportamiento por defecto para máxima compatibilidad.
+  e.preventDefault?.();
+
   const delta = e.clientX - origenX;
-  const deltaY = e.clientY - origenY;
   ultimoDeltaX = delta;
   const ancho = libro.clientWidth || 1;
 
   if (direccionGesto === null) {
-    // Aún no sabemos si la persona quiere pasar de página o solo hacer scroll vertical
-    if (
-      Math.abs(delta) < UMBRAL_INTENCION &&
-      Math.abs(deltaY) < UMBRAL_INTENCION
-    )
-      return;
-
-    if (Math.abs(deltaY) > Math.abs(delta)) {
-      // El movimiento es principalmente vertical: dejarlo como scroll normal, no interferir
-      direccionGesto = "vertical";
-      arrastrando = false;
-      paginaAdelante.classList.remove("arrastrando");
-      return;
-    }
-
-    const quiereSiguiente = delta < 0;
-    if (quiereSiguiente && indiceActual >= marcas.length - 1) {
+    if (Math.abs(delta) < UMBRAL_INTENCION) return; // pequeño umbral para distinguir de un tap
+    if (marcas.length <= 1) {
       direccionGesto = "bloqueado";
       return;
     }
-    if (!quiereSiguiente && indiceActual <= 0) {
-      direccionGesto = "bloqueado";
-      return;
-    }
-    direccionGesto = quiereSiguiente ? "next" : "prev";
+    direccionGesto = delta < 0 ? "next" : "prev";
     prepararFlip(direccionGesto);
   }
-  if (direccionGesto === "bloqueado" || direccionGesto === "vertical") return;
-
-  // Ya es un gesto horizontal confirmado: evita que el navegador intente
-  // además desplazar o hacer zoom con el mismo gesto (eso es lo que causaba
-  // el salto/"cosas raras" al arrastrar).
-  e.preventDefault?.();
+  if (direccionGesto === "bloqueado") return;
 
   const progreso = Math.max(-1, Math.min(1, delta / ancho));
   paginaAdelante.style.transform = `rotateY(${progreso * 180}deg)`;
@@ -428,11 +410,7 @@ function alSoltarArrastre() {
   arrastrando = false;
   paginaAdelante.classList.remove("arrastrando");
 
-  if (
-    direccionGesto === null ||
-    direccionGesto === "bloqueado" ||
-    direccionGesto === "vertical"
-  ) {
+  if (direccionGesto === null || direccionGesto === "bloqueado") {
     direccionGesto = null;
     return;
   }
@@ -444,7 +422,9 @@ function alSoltarArrastre() {
   if (progreso > UMBRAL_COMPLETAR) {
     animando = true;
     const destino =
-      direccionGesto === "next" ? indiceActual + 1 : indiceActual - 1;
+      direccionGesto === "next"
+        ? (indiceActual + 1) % marcas.length
+        : (indiceActual - 1 + marcas.length) % marcas.length;
     const anguloFinal = direccionGesto === "next" ? -180 : 180;
     const direccionFinal = direccionGesto;
     requestAnimationFrame(() => {
