@@ -268,15 +268,24 @@ window.manejarErrorImagen = manejarErrorImagen;
 function calcularGrid(cantidad) {
   if (cantidad <= 1) return { columnas: 1, filas: 1 };
   if (cantidad === 2) return { columnas: 2, filas: 1 };
+  // 3 y 4 usan la misma cuadrícula base de 2x2; con 3, el tercer producto
+  // se centra abajo en vez de quedar en la columna izquierda (ver tarjetaProducto).
   if (cantidad <= 4) return { columnas: 2, filas: 2 };
   const columnas = Math.ceil(Math.sqrt(cantidad));
   const filas = Math.ceil(cantidad / columnas);
   return { columnas, filas };
 }
 
-function tarjetaProducto(producto) {
+function tarjetaProducto(producto, indice, total) {
+  // Caso especial: con exactamente 3 productos, el tercero (el último) se
+  // centra en la fila de abajo en vez de quedar pegado a la izquierda,
+  // como una "pirámide" (dos arriba, uno centrado abajo).
+  const esTercerDeTres = total === 3 && indice === 2;
+  const estilo = esTercerDeTres
+    ? ' style="grid-column: 1 / -1; justify-self: center; width: 50%;"'
+    : "";
   return `
-    <article class="producto">
+    <article class="producto"${estilo}>
       <div class="producto__imagen-cont">
         <img
           class="producto__imagen"
@@ -297,7 +306,7 @@ function renderPagina(elemento, contenido) {
   if (contenido.esPortada) {
     elemento.innerHTML = `
       <div class="portada">
-        <h1 class="portada__titulo">Portafolio de Productos<br>Provisión Agrícola</h1>
+        <h1 class="portada__titulo">PORTAFOLIO DE PRODUCTOS<br>PROVISIÓN AGRÍCOLA</h1>
         <div class="portada__logo-cont">
           <img
             class="portada__logo"
@@ -325,7 +334,7 @@ function renderPagina(elemento, contenido) {
         >
       </div>
       <div class="grilla" style="${estiloGrilla}">
-        ${marca.productos.map(tarjetaProducto).join("")}
+        ${marca.productos.map((p, i) => tarjetaProducto(p, i, marca.productos.length)).join("")}
       </div>
       <a class="pagina__boton" href="${marca.enlace}" target="_blank" rel="noopener noreferrer">
         Ver página
