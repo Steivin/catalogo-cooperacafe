@@ -294,7 +294,7 @@ body {
 .portada__titulo {
   font-family: var(--fuente-titular);
   font-weight: 600;
-  font-size: clamp(24px, 5vw, 38px);
+  font-size: clamp(30px, 5vw, 38px);
   line-height: 1.25;
   color: var(--verde-oscuro);
   margin: 0;
@@ -307,7 +307,7 @@ body {
 }
 
 .portada__logo {
-  max-width: 70%;
+  max-width: 80%;
   max-height: 180px;
   object-fit: contain;
 }
