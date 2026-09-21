@@ -1,61 +1,110 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Catálogo COOPERACAFE</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>CATÁLOGO - COOPERACAFE</title>
 
-<!-- Tipografías: Fraunces para titulares (carácter artesanal/cafetero), Work Sans para texto -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Tipografías: Fraunces para titulares (carácter artesanal/cafetero), Work Sans para texto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
 
-<link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <!-- ===================== ENCABEZADO ===================== -->
+    <header class="cabecera">
+      <div class="cabecera__interior">
+        <img
+          class="cabecera__logo"
+          src="https://cooperacafe.com/wp-content/uploads/2023/03/Recurso-1.png"
+          alt="COOPERACAFE"
+          onerror="
+            this.style.display = 'none';
+            this.nextElementSibling.style.display = 'inline';
+          "
+        />
+        <!-- Respaldo textual si el logo (local o remoto) no carga -->
+        <span class="cabecera__logo-texto" style="display: none"
+          >COOPERACAFE</span
+        >
+      </div>
+    </header>
 
-  <!-- ===================== ENCABEZADO ===================== -->
-  <header class="cabecera">
-    <div class="cabecera__interior">
-      <img
-        class="cabecera__logo"
-        src="https://cooperacafe.com/wp-content/uploads/2023/03/Recurso-1.png"
-        alt="COOPERACAFE"
-        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+    <!-- ===================== CATÁLOGO ===================== -->
+    <main class="catalogo" id="catalogo">
+      <div class="libro" id="libro">
+        <!-- La página "de atrás" muestra el destino del paso de página -->
+        <section
+          class="pagina pagina--atras"
+          id="paginaAtras"
+          aria-hidden="true"
+        ></section>
+        <!-- La página "de adelante" es la visible; se gira para revelar la de atrás -->
+        <section class="pagina pagina--adelante" id="paginaAdelante"></section>
+      </div>
+
+      <!-- Flechas de navegación -->
+      <button
+        class="flecha flecha--izq"
+        id="btnAnterior"
+        aria-label="Página anterior"
+        type="button"
       >
-      <!-- Respaldo textual si el logo (local o remoto) no carga -->
-      <span class="cabecera__logo-texto" style="display:none;">COOPERACAFE</span>
-    </div>
-  </header>
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <button
+        class="flecha flecha--der"
+        id="btnSiguiente"
+        aria-label="Página siguiente"
+        type="button"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
 
-  <!-- ===================== CATÁLOGO ===================== -->
-  <main class="catalogo" id="catalogo">
+      <!-- Indicador de página -->
+      <div
+        class="indicador"
+        id="indicador"
+        role="status"
+        aria-live="polite"
+      ></div>
+    </main>
 
-    <div class="libro" id="libro">
-      <!-- La página "de atrás" muestra el destino del paso de página -->
-      <section class="pagina pagina--atras" id="paginaAtras" aria-hidden="true"></section>
-      <!-- La página "de adelante" es la visible; se gira para revelar la de atrás -->
-      <section class="pagina pagina--adelante" id="paginaAdelante"></section>
-    </div>
+    <!-- ===================== PIE DE PÁGINA ===================== -->
+    <footer class="pie">
+      <span>Somos Familia Cafetera</span>
+    </footer>
 
-    <!-- Flechas de navegación -->
-    <button class="flecha flecha--izq" id="btnAnterior" aria-label="Página anterior" type="button">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <button class="flecha flecha--der" id="btnSiguiente" aria-label="Página siguiente" type="button">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
-
-    <!-- Indicador de página -->
-    <div class="indicador" id="indicador" role="status" aria-live="polite"></div>
-
-  </main>
-
-  <!-- ===================== PIE DE PÁGINA ===================== -->
-  <footer class="pie">
-    <span>Somos Familia Cafetera</span>
-  </footer>
-
-  <script src="js/catalogo.js"></script>
-</body>
+    <script src="js/catalogo.js"></script>
+  </body>
 </html>

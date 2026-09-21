@@ -7,20 +7,6 @@
    productos; la cuadrícula se adapta sola según la cantidad.
    ===================================================================== */
 
-/* ---------------------------------------------------------------------
-   DATOS DE EJEMPLO
-   ---------------------------------------------------------------------
-   Estas 5 marcas son SOLO DE DEMOSTRACIÓN, para mostrar cómo luce la
-   página con 1, 2, 3/4 y 5+ fotos de producto. Reemplázalas por las
-   ~20 marcas reales de COOPERACAFE. Cada marca admite:
-     nombre     (obligatorio — se usa como texto alternativo del logo)
-     logo       (obligatorio — ruta a la imagen grande del logo de la marca,
-                 ej: "assets/logo-marca-01.png")
-     enlace     (obligatorio — único enlace de la página, al final del todo)
-     productos  (uno o varios; cada producto solo necesita:)
-       nombre   (para el texto alternativo de la foto)
-       imagen   (ruta local, ej: "assets/producto-01.jpg")
-   ------------------------------------------------------------------- */
 const marcas = [
   {
     nombre: "JM ESTRADA",
@@ -32,10 +18,7 @@ const marcas = [
         nombre: "Módulo clasificador tanque tina",
         imagen: "assets/tanquetina.png",
       },
-      {
-        nombre: "Secadora Manual",
-        imagen: "assets/secadoramanual.png",
-      },
+      { nombre: "Secadora Manual", imagen: "assets/secadoramanual.png" },
     ],
   },
   {
@@ -44,7 +27,7 @@ const marcas = [
     enlace: "https://fimar.co/maquinaria-para-cafe.html",
     productos: [
       { nombre: "Despulpadora", imagen: "assets/despulpadorafimar.png" },
-      { nombre: "", imagen: "assets/fimar2.png" },
+      { nombre: "Fimar", imagen: "assets/fimar2.png" },
     ],
   },
   {
@@ -209,8 +192,30 @@ let indiceActual = 0;
 let animando = false; // true mientras corre la animación de paso de página
 let arrastrando = false; // true mientras el usuario arrastra/desliza
 let origenX = 0;
+let origenY = 0;
 let ultimoDeltaX = 0;
-let direccionGesto = null; // 'next' | 'prev' | 'bloqueado' | null
+let direccionGesto = null; // 'next' | 'prev' | 'bloqueado' | 'vertical' | null
+
+/* ---------------------------------------------------------------------
+   PRECARGA DE IMÁGENES
+   ---------------------------------------------------------------------
+   Se cargan en memoria del navegador TODAS las imágenes del catálogo
+   apenas se abre la página. Así, cuando el usuario pasa de página, la
+   foto ya está lista y no "aparece a medio giro" ni frena la animación.
+   ------------------------------------------------------------------- */
+function precargarImagenes() {
+  const rutas = new Set();
+  marcas.forEach((marca) => {
+    if (marca.logo) rutas.add(marca.logo);
+    marca.productos.forEach((p) => {
+      if (p.imagen) rutas.add(p.imagen);
+    });
+  });
+  rutas.forEach((ruta) => {
+    const img = new Image();
+    img.src = ruta;
+  });
+}
 
 /* ---------------------------------------------------------------------
    PLACEHOLDER PARA IMÁGENES FALTANTES
@@ -257,7 +262,6 @@ function tarjetaProducto(producto) {
           class="producto__imagen"
           src="${producto.imagen}"
           alt="${producto.nombre}"
-          loading="lazy"
           onerror="manejarErrorImagen(this)"
         >
       </div>
@@ -353,6 +357,7 @@ function anterior() {
    ARRASTRE CON MOUSE Y DESLIZAMIENTO TÁCTIL (Pointer Events unifica ambos)
    ------------------------------------------------------------------- */
 const UMBRAL_COMPLETAR = 0.22; // fracción del ancho para confirmar el cambio de página
+const UMBRAL_INTENCION = 8; // px mínimos antes de decidir si el gesto es horizontal o vertical
 
 function alIniciarArrastre(e) {
   if (animando) return;
@@ -362,6 +367,7 @@ function alIniciarArrastre(e) {
   arrastrando = true;
   direccionGesto = null;
   origenX = e.clientX;
+  origenY = e.clientY;
   ultimoDeltaX = 0;
   paginaAdelante.classList.add("arrastrando");
   paginaAdelante.classList.remove("animando");
@@ -371,11 +377,26 @@ function alIniciarArrastre(e) {
 function alMoverArrastre(e) {
   if (!arrastrando) return;
   const delta = e.clientX - origenX;
+  const deltaY = e.clientY - origenY;
   ultimoDeltaX = delta;
   const ancho = libro.clientWidth || 1;
 
   if (direccionGesto === null) {
-    if (Math.abs(delta) < 6) return; // pequeño umbral para distinguir de un tap
+    // Aún no sabemos si la persona quiere pasar de página o solo hacer scroll vertical
+    if (
+      Math.abs(delta) < UMBRAL_INTENCION &&
+      Math.abs(deltaY) < UMBRAL_INTENCION
+    )
+      return;
+
+    if (Math.abs(deltaY) > Math.abs(delta)) {
+      // El movimiento es principalmente vertical: dejarlo como scroll normal, no interferir
+      direccionGesto = "vertical";
+      arrastrando = false;
+      paginaAdelante.classList.remove("arrastrando");
+      return;
+    }
+
     const quiereSiguiente = delta < 0;
     if (quiereSiguiente && indiceActual >= marcas.length - 1) {
       direccionGesto = "bloqueado";
@@ -388,18 +409,30 @@ function alMoverArrastre(e) {
     direccionGesto = quiereSiguiente ? "next" : "prev";
     prepararFlip(direccionGesto);
   }
-  if (direccionGesto === "bloqueado") return;
+  if (direccionGesto === "bloqueado" || direccionGesto === "vertical") return;
+
+  // Ya es un gesto horizontal confirmado: evita que el navegador intente
+  // además desplazar o hacer zoom con el mismo gesto (eso es lo que causaba
+  // el salto/"cosas raras" al arrastrar).
+  e.preventDefault?.();
 
   const progreso = Math.max(-1, Math.min(1, delta / ancho));
   paginaAdelante.style.transform = `rotateY(${progreso * 180}deg)`;
 }
 
 function alSoltarArrastre() {
-  if (!arrastrando) return;
+  if (!arrastrando) {
+    direccionGesto = null;
+    return;
+  }
   arrastrando = false;
   paginaAdelante.classList.remove("arrastrando");
 
-  if (direccionGesto === null || direccionGesto === "bloqueado") {
+  if (
+    direccionGesto === null ||
+    direccionGesto === "bloqueado" ||
+    direccionGesto === "vertical"
+  ) {
     direccionGesto = null;
     return;
   }
@@ -461,5 +494,6 @@ document.addEventListener("keydown", (e) => {
 /* ---------------------------------------------------------------------
    INICIO
    ------------------------------------------------------------------- */
+precargarImagenes();
 renderPagina(paginaAdelante, marcas[indiceActual]);
 actualizarIndicador();
