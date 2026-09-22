@@ -92,6 +92,7 @@ const marcas = [
       { nombre: "Producto2", imagen: "assets/preci2.png" },
     ],
   },
+  /*
   {
     nombre: "PROPLACOL",
     logo: "assets/proplacollogo.png",
@@ -101,6 +102,7 @@ const marcas = [
       { nombre: "Producto2", imagen: "assets/pro2.png" },
     ],
   },
+  */
   {
     nombre: "SYNGENTA",
     logo: "assets/syngentalogo.png",
